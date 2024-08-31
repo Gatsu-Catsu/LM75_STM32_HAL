@@ -42,6 +42,11 @@
 #define TIMEOUT             500
 
 
+/* Limits of THYST and TOS register */
+#define MAX_TEMP           125
+#define MIN_TEMP           -55  
+
+
 static LM75_Status write_config(LM75 *dev, uint8_t *data);
 static LM75_Status read_config(LM75 *dev, uint8_t *dest);
 static LM75_Status write_temperature(LM75 *dev, uint8_t mem_addr, float temp);
@@ -136,6 +141,30 @@ LM75_Status LM75_Init(LM75 *dev, I2C_HandleTypeDef *hi2c, LM75_Version ver, uint
     {
         return LM75_ERROR;
     }   
+
+    /* Set Thyst register value */
+    if (LM75_OK != LM75_SetHysteresis(dev, low_lim))
+    {
+        return LM75_ERROR;
+    }
+
+    return LM75_OK;
+}
+
+/* Set the limit at which the O.S. pin will no longer be driven */
+LM75_Status LM75_SetHysteresis(LM75 *dev, float low_lim)
+{
+    if (low_lim > MAX_TEMP || low_lim < MIN_TEMP)
+    {
+        return LM75_ERROR;
+    }
+
+    if (LM75_OK != write_temperature(dev, LM75_THYST_REG, low_lim))
+    {
+        return LM75_ERROR;
+    }
+
+    dev->thyst_c = low_lim;
 
     return LM75_OK;
 }
