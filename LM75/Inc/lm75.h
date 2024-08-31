@@ -37,7 +37,7 @@ typedef struct {
     I2C_HandleTypeDef *i2c;
 
     /* Sensor version */
-    LM75_VERSION ver;
+    LM75_Version ver;
 
     /* Sensor address */
     uint8_t addr;
@@ -51,6 +51,9 @@ typedef struct {
     /* Actual temperature in degrees celsius stored in the Temp register */
     float temp_c;
 } LM75;
+
+
+LM75_Status LM75_Init(LM75 *dev, I2C_HandleTypeDef *hi2c, LM75_Version ver, uint8_t addr, float low_lim, float upp_lim);
 
 
 #endif

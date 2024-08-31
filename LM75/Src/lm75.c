@@ -42,14 +42,14 @@
 #define TIMEOUT             500
 
 
-static LM75_STATUS write_config(LM75 *dev, uint8_t *data);
-static LM75_STATUS read_config(LM75 *dev, uint8_t *dest);
-static LM75_STATUS write_temperature(LM75 *dev, uint8_t mem_addr, float temp);
-static LM75_STATUS read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest);
+static LM75_Status write_config(LM75 *dev, uint8_t *data);
+static LM75_Status read_config(LM75 *dev, uint8_t *dest);
+static LM75_Status write_temperature(LM75 *dev, uint8_t mem_addr, float temp);
+static LM75_Status read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest);
 
 
 /* Write to configuration register */
-static LM75_STATUS write_config(LM75 *dev, uint8_t *data)
+static LM75_Status write_config(LM75 *dev, uint8_t *data)
 {
     if (HAL_OK != HAL_I2C_Mem_Write(dev->i2c, dev->addr, LM75_CONF_REG, I2C_MEMADD_SIZE_8BIT, data, MIN_REG_SIZE, TIMEOUT))
     {
@@ -60,7 +60,7 @@ static LM75_STATUS write_config(LM75 *dev, uint8_t *data)
 }
 
 /* Read from the configuration register */
-static LM75_STATUS read_config(LM75 *dev, uint8_t *dest)
+static LM75_Status read_config(LM75 *dev, uint8_t *dest)
 {
 
     if (HAL_OK != HAL_I2C_Mem_Read(dev->i2c, dev->addr, LM75_CONF_REG, I2C_MEMADD_SIZE_8BIT, dest, MIN_REG_SIZE, TIMEOUT))
@@ -72,7 +72,7 @@ static LM75_STATUS read_config(LM75 *dev, uint8_t *dest)
 }
 
 /* Write to Tos or Thyst register */
-static LM75_STATUS write_temperature(LM75 *dev, uint8_t mem_addr, float temp)
+static LM75_Status write_temperature(LM75 *dev, uint8_t mem_addr, float temp)
 {
     int8_t value[MAX_REG_SIZE] = {0};
 
@@ -96,7 +96,7 @@ static LM75_STATUS write_temperature(LM75 *dev, uint8_t mem_addr, float temp)
 }
 
 /* Read from Temp, Tos or Thyst register */
-static LM75_STATUS read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest)
+static LM75_Status read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest)
 {
     uint8_t temp_data[MAX_REG_SIZE] = {0};
 
@@ -106,6 +106,36 @@ static LM75_STATUS read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest)
     }
 
     *dest = (temp_data[0] << 8) | temp_data[1];
+
+    return LM75_OK;
+}
+
+
+/* Initialisation of a new sensor */
+LM75_Status LM75_Init(LM75 *dev, I2C_HandleTypeDef *hi2c, LM75_Version ver, uint8_t addr, float low_lim, float upp_lim)
+{
+    /* Configure the sensor */
+    uint8_t cfg_reg_value = ( TWO_FAULTS | OS_ACT_LOW | CMP_MODE );
+
+    /* Set struct parameters */
+    dev->i2c = hi2c;
+    dev->ver = ver;
+    dev->addr = (addr << 1);
+    dev->thyst_c = 0.0f;
+    dev->tos_c = 0.0f;
+    dev->temp_c = 0.0f;
+
+    /* TOS value must be greater than THYST */
+    if (low_lim >= upp_lim)
+    {
+        return LM75_ERROR;
+    }
+
+    /* Set Conf register value */
+    if (LM75_OK != write_config(dev, LM75_CONF_REG, &cfg_reg_value))
+    {
+        return LM75_ERROR;
+    }   
 
     return LM75_OK;
 }
