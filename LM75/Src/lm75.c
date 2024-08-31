@@ -148,6 +148,12 @@ LM75_Status LM75_Init(LM75 *dev, I2C_HandleTypeDef *hi2c, LM75_Version ver, uint
         return LM75_ERROR;
     }
 
+    /* Set TOS register value */
+    if (LM75_OK != LM75_SetOverTemperatureShutdown(dev, upp_lim))
+    {
+        return LM75_ERROR;
+    }
+
     return LM75_OK;
 }
 
@@ -167,4 +173,22 @@ LM75_Status LM75_SetHysteresis(LM75 *dev, float low_lim)
     dev->thyst_c = low_lim;
 
     return LM75_OK;
+}
+
+/* Set the limit temperature at which the O.S. pin will be driven */ 
+LM75_Status LM75_SetOverTemperatureShutdown(LM75 *dev, float upp_lim)
+{
+    if (upp_lim > MAX_TEMP || upp_lim < MIN_TEMP)
+    {
+        return LM75_ERROR;
+    }
+
+    if (LM75_OK != write_temperature(dev, LM75_TOS_REG, upp_lim))
+    {
+        return LM75_ERROR;
+    }
+
+    dev->tos_c = upp_lim;
+
+    return LM75_OK;  
 }
