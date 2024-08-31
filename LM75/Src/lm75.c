@@ -324,3 +324,14 @@ LM75_Status LM75_ShutdownDisable(LM75 *dev)
 
     return LM75_OK;
 }
+
+/* Set value in Conf register */
+LM75_Status LM75_SetConfiguration(LM75 *dev, uint8_t reg_val)
+{
+    if (LM75_OK != write_config(dev, &reg_val))
+    {
+        return LM75_ERROR;
+    }
+
+    return LM75_OK;
+}
