@@ -40,13 +40,26 @@
 #define TIMEOUT             500
 
 
-static LM75_STATUS write_config(LM75 *dev, uint8_t mem_addr, uint8_t *data);
+static LM75_STATUS write_config(LM75 *dev, uint8_t *data);
+static LM75_STATUS read_config(LM75 *dev, uint8_t *dest);
 
 
 /* Write to configuration register */
-static LM75_STATUS write_config(LM75 *dev, uint8_t mem_addr, uint8_t *data)
+static LM75_STATUS write_config(LM75 *dev, uint8_t *data)
 {
-    if (HAL_OK != HAL_I2C_Mem_Write(dev->i2c, dev->addr, mem_addr, I2C_MEMADD_SIZE_8BIT, data, MIN_REG_SIZE, TIMEOUT))
+    if (HAL_OK != HAL_I2C_Mem_Write(dev->i2c, dev->addr, LM75_CONF_REG, I2C_MEMADD_SIZE_8BIT, data, MIN_REG_SIZE, TIMEOUT))
+    {
+        return LM75_ERROR;
+    }
+
+    return LM75_OK;
+}
+
+/* Read from the configuration register */
+static LM75_STATUS read_config(LM75 *dev, uint8_t *dest)
+{
+
+    if (HAL_OK != HAL_I2C_Mem_Read(dev->i2c, dev->addr, LM75_CONF_REG, I2C_MEMADD_SIZE_8BIT, dest, MIN_REG_SIZE, TIMEOUT))
     {
         return LM75_ERROR;
     }
