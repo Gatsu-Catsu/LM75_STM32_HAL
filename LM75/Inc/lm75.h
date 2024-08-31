@@ -42,8 +42,8 @@ typedef struct {
     /* Sensor address */
     uint8_t addr;
 
-    /* Actual temperature in degrees celsius stored in the Thys register */
-    float thys_c;
+    /* Actual temperature in degrees celsius stored in the Thyst register */
+    float thyst_c;
 
     /* Actual temperature in degrees celsius stored in the Tos register */
     float tos_c;
