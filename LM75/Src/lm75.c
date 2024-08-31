@@ -44,7 +44,7 @@
 #define TIMEOUT             500
 
 
-/* Limits of THYST and TOS register */
+/* Limits of Thyst and Tos register */
 #define MAX_TEMP           125
 #define MIN_TEMP           -55  
 
