@@ -9,6 +9,8 @@
  *******************************************************/
 
 
+#include <math.h>
+
 #include "lm75.h"
 
 
@@ -42,6 +44,7 @@
 
 static LM75_STATUS write_config(LM75 *dev, uint8_t *data);
 static LM75_STATUS read_config(LM75 *dev, uint8_t *dest);
+static LM75_STATUS write_temperature(LM75 *dev, uint8_t mem_addr, float temp);
 
 
 /* Write to configuration register */
@@ -60,6 +63,30 @@ static LM75_STATUS read_config(LM75 *dev, uint8_t *dest)
 {
 
     if (HAL_OK != HAL_I2C_Mem_Read(dev->i2c, dev->addr, LM75_CONF_REG, I2C_MEMADD_SIZE_8BIT, dest, MIN_REG_SIZE, TIMEOUT))
+    {
+        return LM75_ERROR;
+    }
+
+    return LM75_OK;
+}
+
+/* Write to Tos or Thyst register */
+static LM75_STATUS write_temperature(LM75 *dev, uint8_t mem_addr, float temp)
+{
+    int8_t value[MAX_REG_SIZE] = {0};
+
+    value[0] = temp;
+
+    if ( fabs(temp - value[0]) >= 0.5f )
+    {
+        value[1] = 0x80;
+    }
+    else
+    {
+        value[1] = 0x00;
+    }
+    
+    if (HAL_OK != HAL_I2C_Mem_Write(dev->i2c, dev->addr, mem_addr, I2C_MEMADD_SIZE_8BIT, (uint8_t*)value, MAX_REG_SIZE, TIMEOUT))
     {
         return LM75_ERROR;
     }
