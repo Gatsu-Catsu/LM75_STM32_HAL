@@ -45,6 +45,7 @@
 static LM75_STATUS write_config(LM75 *dev, uint8_t *data);
 static LM75_STATUS read_config(LM75 *dev, uint8_t *dest);
 static LM75_STATUS write_temperature(LM75 *dev, uint8_t mem_addr, float temp);
+static LM75_STATUS read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest);
 
 
 /* Write to configuration register */
@@ -90,6 +91,21 @@ static LM75_STATUS write_temperature(LM75 *dev, uint8_t mem_addr, float temp)
     {
         return LM75_ERROR;
     }
+
+    return LM75_OK;
+}
+
+/* Read from Temp, Tos or Thyst register */
+static LM75_STATUS read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest)
+{
+    uint8_t temp_data[MAX_REG_SIZE] = {0};
+
+    if (HAL_OK != HAL_I2C_Mem_Read(dev->i2c, dev->addr, mem_addr, I2C_MEMADD_SIZE_8BIT, temp_data, MAX_REG_SIZE, TIMEOUT))
+    {
+        return LM75_ERROR;
+    }
+
+    *dest = (temp_data[0] << 8) | temp_data[1];
 
     return LM75_OK;
 }
