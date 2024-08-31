@@ -57,6 +57,8 @@ LM75_Status LM75_Init(LM75 *dev, I2C_HandleTypeDef *hi2c, LM75_Version ver, uint
 LM75_Status LM75_SetHysteresis(LM75 *dev, float low_lim);
 LM75_Status LM75_SetOverTemperatureShutdown(LM75 *dev, float upp_lim);
 LM75_Status LM75_GetTemperature(LM75 *dev);
+LM75_Status LM75_ShutdownEnable(LM75 *dev);
+LM75_Status LM75_ShutdownDisable(LM75 *dev);
 
 
 #endif

@@ -199,7 +199,7 @@ LM75_Status LM75_Init(LM75 *dev, I2C_HandleTypeDef *hi2c, LM75_Version ver, uint
     }
 
     /* Set Conf register value */
-    if (LM75_OK != write_config(dev, LM75_CONF_REG, &cfg_reg_value))
+    if (LM75_OK != write_config(dev, &cfg_reg_value))
     {
         return LM75_ERROR;
     }   
@@ -280,6 +280,46 @@ LM75_Status LM75_GetTemperature(LM75 *dev)
             dev->temp_c = CONV_ERR;
             return LM75_ERROR;
         }
+    }
+
+    return LM75_OK;
+}
+
+/* Enable LM75 shutdown mode */
+LM75_Status LM75_ShutdownEnable(LM75 *dev)
+{
+    uint8_t cfg_reg_value = 0;
+
+    if (LM75_OK != read_config(dev, &cfg_reg_value))
+    {
+        return LM75_ERROR;
+    }
+
+    cfg_reg_value |= SHUTDOWN;
+
+    if (LM75_OK != write_config(dev, &cfg_reg_value))
+    {
+        return LM75_ERROR;
+    }
+
+    return LM75_OK;
+}
+
+/* Disable LM75 shutdown mode */
+LM75_Status LM75_ShutdownDisable(LM75 *dev)
+{
+    uint8_t cfg_reg_value = 0;
+
+    if (LM75_OK != read_config(dev, &cfg_reg_value))
+    {
+        return LM75_ERROR;
+    }
+
+    cfg_reg_value &= ~(SHUTDOWN);
+
+    if (LM75_OK != write_config(dev, &cfg_reg_value))
+    {
+        return LM75_ERROR;
     }
 
     return LM75_OK;
