@@ -56,5 +56,7 @@ typedef struct {
 LM75_Status LM75_Init(LM75 *dev, I2C_HandleTypeDef *hi2c, LM75_Version ver, uint8_t addr, float low_lim, float upp_lim);
 LM75_Status LM75_SetHysteresis(LM75 *dev, float low_lim);
 LM75_Status LM75_SetOverTemperatureShutdown(LM75 *dev, float upp_lim);
+LM75_Status LM75_GetTemperature(LM75 *dev);
+
 
 #endif

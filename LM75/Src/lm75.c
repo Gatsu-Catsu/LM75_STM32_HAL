@@ -10,6 +10,8 @@
 
 
 #include <math.h>
+#include <stdbool.h>
+
 
 #include "lm75.h"
 
@@ -47,10 +49,17 @@
 #define MIN_TEMP           -55  
 
 
+/* Result value of conversion error */
+#define CONV_ERR            -1000.0f
+
+
 static LM75_Status write_config(LM75 *dev, uint8_t *data);
 static LM75_Status read_config(LM75 *dev, uint8_t *dest);
 static LM75_Status write_temperature(LM75 *dev, uint8_t mem_addr, float temp);
 static LM75_Status read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest);
+static bool is_temperature_negative(uint16_t temp);
+static LM75_Status conv_neg_temp_from_raw(uint16_t raw_temp, LM75_Version ver, float *dest);
+static LM75_Status conv_pos_temp_from_raw(uint16_t raw_temp, LM75_Version ver, float *dest);
 
 
 /* Write to configuration register */
@@ -111,6 +120,59 @@ static LM75_Status read_temperature(LM75 *dev, uint8_t mem_addr, uint16_t *dest)
     }
 
     *dest = (temp_data[0] << 8) | temp_data[1];
+
+    return LM75_OK;
+}
+
+/* Check if the value is negative */
+static bool is_temperature_negative(uint16_t temp)
+{
+    if (temp & 0x8000)
+    {
+        return true;
+    }
+    
+    return false;
+}
+
+/* Convert negative temperature from raw register value */
+static LM75_Status conv_neg_temp_from_raw(uint16_t raw_temp, LM75_Version ver, float *dest)
+{
+    raw_temp = ~raw_temp;
+
+    if (LM75_9BIT == ver)
+    {
+        raw_temp = (raw_temp >> 7) + 1; // 2 complement
+        *dest = -(0.5f * raw_temp); 
+    }
+    else if (LM75_11BIT == ver)
+    {
+        raw_temp = (raw_temp >> 5) + 1; // 2 complement
+        *dest = -(0.125f * raw_temp);
+    }
+    else
+    {
+        return LM75_ERROR;
+    }
+
+    return LM75_OK;
+}
+
+/* Convert positive temperature from raw register value */
+static LM75_Status conv_pos_temp_from_raw(uint16_t raw_temp, LM75_Version ver, float *dest)
+{
+    if (LM75_9BIT == ver)
+    {
+        *dest = ( 0.5f * (raw_temp >> 7) );
+    }
+    else if (LM75_11BIT == ver)
+    {
+        *dest = ( 0.125f * (raw_temp >> 5) );
+    }
+    else
+    {
+        return LM75_ERROR;
+    }
 
     return LM75_OK;
 }
@@ -191,4 +253,34 @@ LM75_Status LM75_SetOverTemperatureShutdown(LM75 *dev, float upp_lim)
     dev->tos_c = upp_lim;
 
     return LM75_OK;  
+}
+
+/* Get temperature value from sensor */
+LM75_Status LM75_GetTemperature(LM75 *dev)
+{
+    uint16_t raw_temp = 0;
+
+    if (LM75_OK != read_temperature(dev, LM75_TEMP_REG, &raw_temp))
+    {
+        return LM75_ERROR;
+    }
+
+    if (is_temperature_negative(raw_temp))
+    {
+        if (LM75_OK != conv_neg_temp_from_raw(raw_temp, dev->ver, &(dev->temp_c)))
+        {
+            dev->temp_c = CONV_ERR;
+            return LM75_ERROR;
+        }
+    }
+    else
+    {
+        if (LM75_OK != conv_pos_temp_from_raw(raw_temp, dev->ver, &(dev->temp_c)))
+        {
+            dev->temp_c = CONV_ERR;
+            return LM75_ERROR;
+        }
+    }
+
+    return LM75_OK;
 }
